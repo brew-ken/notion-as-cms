@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
@@ -17,23 +18,49 @@ const Container = styled.div`
   height: 100%;
 `
 
+const StyledTable = styled.table`
+  border: border: 1px solid black;
+`
+
 export async function getStaticProps() {
   const pageDataFromNotion = await queryDatabase();
+  
+  
+  const tableBlockId = '44b538a4-aff2-4991-b8a5-bc493b56c114';
+  const tableResponse = await notion.blocks.children.list({
+    block_id: tableBlockId,
+    page_size: 50,
+  });
+  let tableRows = []
+
+  for(const row of tableResponse.results) {
+    const rowData = row.table_row.cells
+    let rowText = []
+    for(const column of rowData) {
+      rowText.push(column[0]?.plain_text)
+    }
+    tableRows.push(rowText)
+  }
+
   const databaseId = 'b6c54b27d63a413390b42f41cc9e2d78';
   const databaseResponse = await notion.databases.query({
     database_id: databaseId
   });
-  // console.log('data here: ', pageDataFromNotion)
-  console.log('database response: ', JSON.stringify(databaseResponse))
+  
   return {
     props: {
-      pageDataFromNotion,
+      tableRows
     },
   };
 }
 
 export default function Home(props) {
-  console.log('props: ', JSON.stringify(props))
+  const { tableRows } = props
+  const [data, setData] = useState([])
+  useEffect(() => {
+    setData(tableRows)
+  })
+
   return (
     <>
       <Head>
@@ -42,13 +69,28 @@ export default function Home(props) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main} style={{
-
-        
-      }} 
-      >
+      <main>
         <Container>
           Hello, this is the page that we can work here
+          <table style={{ 
+            border: '5px solid yellow',
+            borderCollapse: 'collapse' 
+          }}>
+            {
+              data && data.map((row, rowIndex) => {
+                return <tr key={rowIndex}>
+                  {
+                    row.map((column, columnIndex) => {
+                      return <td key={rowIndex * columnIndex} style={{
+                        border: '5px solid yellow',
+                        borderCollapse: 'collapse' 
+                      }}>{column}</td>
+                    })
+                  }
+                  </tr>
+              })
+            }
+          </table>
         </Container>
       </main>
     </>
