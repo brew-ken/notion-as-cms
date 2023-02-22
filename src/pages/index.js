@@ -2,10 +2,24 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
+import queryDatabase from '@/api/query-database'
+import { parseProperties } from '@/utils/parse-properties'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export default function Home() {
+export async function getStaticProps() {
+  const pageDataFromNotion = await queryDatabase();
+  // const posts = parseProperties(database);
+  console.log('data here: ', pageDataFromNotion)
+  return {
+    props: {
+      pageDataFromNotion,
+    },
+  };
+}
+
+export default function Home(props) {
+  console.log('props: ', JSON.stringify(props))
   return (
     <>
       <Head>
